@@ -131,7 +131,7 @@ def GA(distance_matrix,locations_dict_inverse,list_of_homes,starting_car_locatio
     NUM=20*(inmid_points+2)                                  # Number of population   for GA, use large enough data to ensure accuracy
     
     # To calculate faster, you can reduce this value
-    GEN=20*(inmid_points+2)                                  # Number of reproduction for GA, use large enough data to ensure accuracy
+    GEN=inmid_points+2                                       # Number of reproduction for GA, use large enough data to ensure accuracy
     
     groups=np.zeros([NUM,inmid_points+2],dtype=np.float32)   # +2 means take the starting_car_location as the fisrt and the end 
     energy=np.zeros([NUM,1],dtype=np.float32)
