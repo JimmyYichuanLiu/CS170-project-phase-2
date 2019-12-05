@@ -1,10 +1,9 @@
 #!/user/bin/bash
 #-*- coding:utf-8 -*-
-
 import os
 import sys
-import numpy as np
 import time
+import math
 sys.path.append('..')
 sys.path.append('../..')
 import argparse
@@ -45,19 +44,29 @@ def Floyd(adjacency_matrix):
     return adjacency_matrix
 
 
-def DropOffs(distance_matrix,list_of_homes,locations_dict_inverse,path_best):
+def DropOffs(distance_matrix,list_of_homes,locations_dict,locations_dict_inverse,path_best):
     """
         get drops_offs of TAs for best car_path 
     """
-    drop_offs=[]
+    drop_offs_inv={}
     for home in list_of_homes:
         home_idx=locations_dict_inverse[home]
-        drop_off={'distance':MAX_VALUE,'drop_off':locations_dict_inverse[path_best[0]]}    # drop off at car_starting)location by default
-        for point in path_best:
+        drop_off={'distance':MAX_VALUE,'drop_off':path_best[0]}    # drop off at car_starting location by default
+        for point in np.int32(path_best):
             if distance_matrix[home_idx,point]<drop_off['distance']:
                 drop_off['distance']=distance_matrix[home_idx,point]
-                drop_off['drop_off']=locations_dict_inverse[point]
-        drop_offs.append(drop_off['drop_off'])
+                drop_off['drop_off']=point
+        drop_offs_inv[home_idx]=drop_off['drop_off']
+    
+    drop_offs={}
+    for home,drop_off in drop_offs_inv.items():
+        home=np.int32(home)
+        drop_off=np.int32(drop_off)
+        if drop_off in drop_offs.keys():
+            drop_offs[drop_off].append(home)
+        else:
+            drop_offs[drop_off]=[home]
+
     return drop_offs
 
 def NoDrivingEnergy(distance_matrix,list_of_homes,locations_dict_inverse,starting_car_location):
@@ -93,29 +102,35 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
      
     
     # no driving
-    car_path=[], 
+    car_path=[]
     drop_offs=[starting_car_location]
     energy=NoDrivingEnergy(distance_matrix,list_of_homes,locations_dict_inverse,starting_car_location)
     print('    energy cost when no driving is ', energy)
  
-    for i in range(1,n):
+ 
+    last_energy=MAX_VALUE
+    for i in range(1,math.ceil(n/2)):
         print('    processing for middle point = ',i,end=" ")
         start_t=time.time()
         path_best,energy_best=GeneticAlgorithm.GA(distance_matrix, locations_dict_inverse,
                                     list_of_homes, starting_car_location, i)
+        
         if energy_best<energy:
             car_path=path_best
+            last_energy=energy
             energy=energy_best
-        
+
+        if abs(last_energy-energy)/energy<0.01:
+            break
         print(', current minimum energy cost is ',energy,", time elapsed with ", time.time()-start_t,"s")
+
      
-    drop_offs=DropOffs(distance_matrix, list_of_homes, locations_dict_inverse, car_path)  
-    car_path=[locations_dict_inverse[loc] for loc in car_path]  
+    drop_offs=DropOffs(distance_matrix, list_of_homes, locations_dict,locations_dict_inverse, car_path)  
      
     print('    Eventually: car_path  ',car_path)
     print('                drop_offs ',drop_offs)
     print('                energy    ',energy)
-    return car_path,drop_offs
+    return np.int32(car_path),drop_offs
 
 """
 Convert solution with path and dropoff_mapping in terms of indices

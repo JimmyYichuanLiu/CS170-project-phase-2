@@ -1,3 +1,5 @@
+#!/user/bin/bash
+#-*- coding:utf-8 -*-
 
 import numpy as np
 import math
@@ -127,7 +129,10 @@ def GA(distance_matrix,locations_dict_inverse,list_of_homes,starting_car_locatio
     """
     n=distance_matrix.shape[0]
     NUM=20*(inmid_points+2)                                  # Number of population   for GA, use large enough data to ensure accuracy
+    
+    # To calculate faster, you can reduce this value
     GEN=20*(inmid_points+2)                                  # Number of reproduction for GA, use large enough data to ensure accuracy
+    
     groups=np.zeros([NUM,inmid_points+2],dtype=np.float32)   # +2 means take the starting_car_location as the fisrt and the end 
     energy=np.zeros([NUM,1],dtype=np.float32)
     
@@ -142,7 +147,6 @@ def GA(distance_matrix,locations_dict_inverse,list_of_homes,starting_car_locatio
         groups[i]=group
         energy[i]=CalculateEnergy(distance_matrix, list_of_homes, locations_dict_inverse, group)    
     
-#     print("1====================")
     
     res=np.append(groups, energy, axis=1)
     res=res[np.argsort(res[:,inmid_points+2])]
@@ -151,7 +155,6 @@ def GA(distance_matrix,locations_dict_inverse,list_of_homes,starting_car_locatio
     energy_best=res[0,inmid_points+2]
     M=math.floor(NUM*PR)
     
-#     print("2====================")
     
     # Perform hybrid operation
     for i in range(GEN):
@@ -159,8 +162,17 @@ def GA(distance_matrix,locations_dict_inverse,list_of_homes,starting_car_locatio
         path_best=res[0,0:inmid_points+2]
         energy_best=res[0,inmid_points+2]
     
-#     print("3====================")
     
     # output result
     return path_best,energy_best
+    
+    
+    
+    
+    
+    
+
+    
+    
+    
     
