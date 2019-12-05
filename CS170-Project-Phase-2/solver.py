@@ -1,10 +1,10 @@
 #!/user/bin/bash
 #-*- coding:utf-8 -*-
 
-
 import os
 import sys
 import numpy as np
+import time
 sys.path.append('..')
 sys.path.append('../..')
 import argparse
@@ -46,10 +46,13 @@ def Floyd(adjacency_matrix):
 
 
 def DropOffs(distance_matrix,list_of_homes,locations_dict_inverse,path_best):
+    """
+        get drops_offs of TAs for best car_path 
+    """
     drop_offs=[]
     for home in list_of_homes:
         home_idx=locations_dict_inverse[home]
-        drop_off={'distance':MAX_VALUE,'drop_off':locations_dict_inverse[path_best[0]]}   
+        drop_off={'distance':MAX_VALUE,'drop_off':locations_dict_inverse[path_best[0]]}    # drop off at car_starting)location by default
         for point in path_best:
             if distance_matrix[home_idx,point]<drop_off['distance']:
                 drop_off['distance']=distance_matrix[home_idx,point]
@@ -83,31 +86,35 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     adjacency_matrix_numpy_arr= data_format_convert(adjacency_matrix)
     distance_matrix=Floyd(adjacency_matrix_numpy_arr)
     
-    locations_dict={}                  # key: index(int), value: location name(other types)
+    locations_dict={}          # key: index(int), value: location name(other types)
     for i in range(n):
         locations_dict[i]=list_of_locations[i]
-    
-    locations_dict_inverse={v:k for k,v in locations_dict.items()}    
-    
+    locations_dict_inverse={v:k for k,v in locations_dict.items()}      # k:v = location:index
+     
     
     # no driving
-    car_path=[' '], 
+    car_path=[], 
     drop_offs=[starting_car_location]
     energy=NoDrivingEnergy(distance_matrix,list_of_homes,locations_dict_inverse,starting_car_location)
-    print('   energy cost when no driving is ', energy)
-    
-    
+    print('    energy cost when no driving is ', energy)
+ 
     for i in range(1,n):
-        print('   process for middle point = ',i,end="")
-        path_best,energy_best=GeneticAlgorithm.GA(adjacency_matrix, distance_matrix, locations_dict, list_of_locations, locations_dict_inverse,
+        print('    processing for middle point = ',i,end=" ")
+        start_t=time.time()
+        path_best,energy_best=GeneticAlgorithm.GA(distance_matrix, locations_dict_inverse,
                                     list_of_homes, starting_car_location, i)
         if energy_best<energy:
             car_path=path_best
             energy=energy_best
-        print('   the minimum energy cost is ',energy_best)
-    
-    drop_offs=DropOffs(distance_matrix, list_of_homes, locations_dict_inverse, car_path)    
-    
+        
+        print(', current minimum energy cost is ',energy,", time elapsed with ", time.time()-start_t,"s")
+     
+    drop_offs=DropOffs(distance_matrix, list_of_homes, locations_dict_inverse, car_path)  
+    car_path=[locations_dict_inverse[loc] for loc in car_path]  
+     
+    print('    Eventually: car_path  ',car_path)
+    print('                drop_offs ',drop_offs)
+    print('                energy    ',energy)
     return car_path,drop_offs
 
 """
@@ -137,13 +144,15 @@ def solve_from_file(input_file, output_directory, params=[]):
 
     input_data = utils.read_file(input_file)
     num_of_locations, num_houses, list_locations, list_houses, starting_car_location, adjacency_matrix = data_parser(input_data)
-    car_path, drop_offs = solve(list_locations, list_houses, starting_car_location, adjacency_matrix, params=params)
+    #print(list_locations)
 
+    car_path, drop_offs = solve(list_locations, list_houses, starting_car_location, adjacency_matrix, params=params)
+ 
     basename, filename = os.path.split(input_file)
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
     output_file = utils.input_to_output(input_file, output_directory)
-
+ 
     convertToFile(car_path, drop_offs, output_file, list_locations)
 
 
